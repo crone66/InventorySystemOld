@@ -32,15 +32,12 @@ namespace InventorySystem
             this.maxInventorySlots = inventorySlots;
         }
 
-        public int AddItem(string itemName, int value, int maxStackValue, bool fill)
+        public int AddItem(int itemId, int value, int maxStackValue, bool fill)
         {
             if (value <= 0)
                 throw new ArgumentOutOfRangeException("value", value, "Value must be greater then zero.");
 
-            if(maxStackValue < value)
-                throw new ArgumentOutOfRangeException("maxStackValue", maxStackValue, "maxStackValue must be greater then variable \"value\"");
-
-            List<Stack> stacks = inventorySlots.Where(s => s.ItemName == itemName).ToList();
+            List<Stack> stacks = inventorySlots.Where(s => s.ItemId == itemId).ToList();
             if (stacks == null)
                 throw new Exception("Item doesn't exists!");
 
@@ -52,24 +49,24 @@ namespace InventorySystem
                 bool enoughSpace = requiredStacks + inventorySlots.Count <= maxInventorySlots;
                 if(enoughSpace || fill)
                 {
-                    SetToMax(itemName, maxStackValue);
-                    return CreateStacks(requiredStacks, itemName, rest, maxStackValue);
+                    SetToMax(itemId, maxStackValue);
+                    return CreateStacks(requiredStacks, itemId, rest, maxStackValue);
                 }
             }
             else
             {
-                return FillSlots(itemName, value, maxStackValue);
+                return FillSlots(itemId, value, maxStackValue);
             }
 
             return value;
         }
 
-        public int RemoveItem(string itemName, int value, bool ignoreNegativeResults)
+        public int RemoveItem(int itemId, int value, bool ignoreNegativeResults)
         {
             if (value <= 0)
                 throw new ArgumentOutOfRangeException("value", value, "Value must be greater then zero.");
 
-            Stack[] stacks = inventorySlots.FindAll(s => s.ItemName == itemName).ToArray();
+            Stack[] stacks = inventorySlots.FindAll(s => s.ItemId == itemId).ToArray();
             if (stacks == null)
                 throw new Exception("Item doesn't exists!");
 
@@ -80,7 +77,7 @@ namespace InventorySystem
                 while (value > 0 || i < stacks.Length)
                 {
                     int toRemove = value > stacks[i].Value ? stacks[i].Value : value;
-                    if (RemoveItem(toRemove, stacks[i].Index, ignoreNegativeResults))
+                    if (RemoveItemFromStack(stacks[i].Index, toRemove, ignoreNegativeResults))
                         value -= toRemove;
 
                     i++;
@@ -90,7 +87,7 @@ namespace InventorySystem
             return value;
         }
 
-        public bool RemoveItem(int value, int stackIndex, bool ignoreNegativeResults)
+        public bool RemoveItemFromStack(int stackIndex, int value, bool ignoreNegativeResults)
         {
             if (value <= 0)
                 throw new ArgumentOutOfRangeException("value", value, "Value must be greater then zero.");
@@ -101,7 +98,7 @@ namespace InventorySystem
                 int result = inventorySlots[fromIndex].Value - value;
                 if(result > 0)
                 {
-                    inventorySlots[fromIndex] = new Stack(stackIndex, inventorySlots[fromIndex].ItemName, result);
+                    inventorySlots[fromIndex] = new Stack(stackIndex, inventorySlots[fromIndex].ItemId, result);
                     return true;
                 }
                 else if(result <= 0)
@@ -126,13 +123,13 @@ namespace InventorySystem
                 {
                     Stack sourceStack = inventorySlots[fromIndex];
                     Stack destinationStack = inventorySlots[toIndex];
-                    inventorySlots[fromIndex] = new Stack(destinationStackIndex, sourceStack.ItemName, sourceStack.Value);
-                    inventorySlots[toIndex] = new Stack(sourceStackIndex, destinationStack.ItemName, destinationStack.Value);
+                    inventorySlots[fromIndex] = new Stack(destinationStackIndex, sourceStack.ItemId, sourceStack.Value);
+                    inventorySlots[toIndex] = new Stack(sourceStackIndex, destinationStack.ItemId, destinationStack.Value);
                     return true;
                 }
                 else
                 {
-                    inventorySlots[fromIndex] = new Stack(destinationStackIndex, inventorySlots[fromIndex].ItemName, inventorySlots[fromIndex].Value);
+                    inventorySlots[fromIndex] = new Stack(destinationStackIndex, inventorySlots[fromIndex].ItemId, inventorySlots[fromIndex].Value);
                     return true;
                 }
             }
@@ -153,18 +150,18 @@ namespace InventorySystem
                 {
                     Stack sourceStack = inventorySlots[fromIndex];
                     Stack destinationStack = inventorySlots[toIndex];
-                    if (sourceStack.ItemName == destinationStack.ItemName)
+                    if (sourceStack.ItemId == destinationStack.ItemId)
                     {
                         int freeSlots = maxStackValue - destinationStack.Value;
                         if (freeSlots >= sourceStack.Value)
                         {
-                            inventorySlots[toIndex] = new Stack(destinationStack.Index, destinationStack.ItemName, maxStackValue);
+                            inventorySlots[toIndex] = new Stack(destinationStack.Index, destinationStack.ItemId, maxStackValue);
                             inventorySlots.RemoveAt(fromIndex);
                         }
                         else
                         {
-                            inventorySlots[fromIndex] = new Stack(sourceStack.Index, sourceStack.ItemName, sourceStack.Value - freeSlots);
-                            inventorySlots[toIndex] = new Stack(destinationStack.Index, destinationStack.ItemName, maxStackValue);
+                            inventorySlots[fromIndex] = new Stack(sourceStack.Index, sourceStack.ItemId, sourceStack.Value - freeSlots);
+                            inventorySlots[toIndex] = new Stack(destinationStack.Index, destinationStack.ItemId, maxStackValue);
                         }
                         return true;
                     }
@@ -175,24 +172,24 @@ namespace InventorySystem
         }
 
 
-        private int FillSlots(string itemName, int value, int maxStackValue)
+        private int FillSlots(int itemId, int value, int maxStackValue)
         {
             int itemsLeft = value;
             for (int i = 0; i < inventorySlots.Count; i++)
             {
-                if (inventorySlots[i].ItemName == itemName)
+                if (inventorySlots[i].ItemId == itemId)
                 {
-                    if (maxStackValue <= inventorySlots[i].Value)
+                    if (maxStackValue > inventorySlots[i].Value)
                     {
                         int freeSlots = maxStackValue - inventorySlots[i].Value;
                         if (freeSlots >= itemsLeft)
                         {
-                            inventorySlots[i] = new Stack(inventorySlots[i].Index, itemName, inventorySlots[i].Value + itemsLeft);
+                            inventorySlots[i] = new Stack(inventorySlots[i].Index, itemId, inventorySlots[i].Value + itemsLeft);
                             itemsLeft = 0;
                         }
                         else
                         {
-                            inventorySlots[i] = new Stack(inventorySlots[i].Index, itemName, maxStackValue);
+                            inventorySlots[i] = new Stack(inventorySlots[i].Index, itemId, maxStackValue);
                             itemsLeft -= freeSlots;
                         }
                     }
@@ -202,27 +199,27 @@ namespace InventorySystem
             return itemsLeft;
         }
 
-        private void SetToMax(string itemName, int maxStackValue)
+        private void SetToMax(int itemId, int maxStackValue)
         {
             for (int i = 0; i < inventorySlots.Count; i++)
             {
-                if (inventorySlots[i].ItemName == itemName)
-                    inventorySlots[i] = new Stack(inventorySlots[i].Index, itemName, maxStackValue);
+                if (inventorySlots[i].ItemId == itemId)
+                    inventorySlots[i] = new Stack(inventorySlots[i].Index, itemId, maxStackValue);
             }
         }
 
-        private int CreateStacks(int requiredStacks, string itemName, int value, int maxStackValue)
+        private int CreateStacks(int requiredStacks, int itemId, int value, int maxStackValue)
         {
             while (requiredStacks > 0 && inventorySlots.Count < maxInventorySlots)
             {
                 if (maxStackValue < value)
                 {
-                    inventorySlots.Add(new Stack(GetUnusedIndex(), itemName, maxStackValue));
+                    inventorySlots.Add(new Stack(GetUnusedIndex(), itemId, maxStackValue));
                     value -= maxStackValue;
                 }
                 else
                 {
-                    inventorySlots.Add(new Stack(GetUnusedIndex(), itemName, value));
+                    inventorySlots.Add(new Stack(GetUnusedIndex(), itemId, value));
                     value = 0;
                 }
                 requiredStacks--;

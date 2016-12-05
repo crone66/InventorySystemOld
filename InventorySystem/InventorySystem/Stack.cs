@@ -9,19 +9,19 @@ namespace InventorySystem
     public struct Stack
     {
         public int Index;
-        public string ItemName;
+        public int ItemId;
         public int Value;
 
-        public Stack(int index, string itemName, int value)
+        public Stack(int index, int itemId, int value)
         {
             Index = index;
-            ItemName = itemName;
+            ItemId = itemId;
             Value = value;
         }
 
         public override string ToString()
         {
-            return string.Format("{{ Index: {0}; ItemName: {1}; Value: {2} }}", Index.ToString(), ItemName, Value.ToString());
+            return string.Format("{{ Index: {0}; ItemName: {1}; Value: {2} }}", Index.ToString(), ItemId, Value.ToString());
         }
     }
 }

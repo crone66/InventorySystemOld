@@ -10,10 +10,11 @@ namespace InventorySystemExample
     {
         static void Main(string[] args)
         {
-            Inventory inv = new Inventory(30);
-            inv.AddItem("test", 49, 10, false);
-            inv.AddItem("test2", 1, 1, true);
-            inv.AddItem("test", 12, 10, true);
+            Inventory inv = new Inventory(7);
+            inv.AddItem(1, 49, 10, false);
+            inv.AddItem(2, 1, 10, true);
+            inv.AddItem(2, 2, 10, true);
+            inv.AddItem(3, 12, 10, true);
 
             for (int i = 0; i < inv.InventorySlots.Count; i++)
             {
